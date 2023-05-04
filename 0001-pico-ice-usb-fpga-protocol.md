@@ -43,7 +43,7 @@ of address for use by the ROS2 developers (possibly the same person).
 ```
 ... <--ros2--> [script.py] <--spibone--> [RP2040] <--spibone--> [iCE40]
                 ^^^^^^^^^     ^^^^^^^     ^^^^^^     ^^^^^^^
-               easier to debug at every level link the chain
+                 easier to debug at every link of the chain
 ```
 
 
@@ -53,6 +53,8 @@ To allow ROS2 integration, a simple wrapper script in python would handle
 the FPGA communication over USB on one side (`f = open('/dev/ttyACM0')`)
 and the ROS2 communication on the other side
 ([`rclpy`](https://github.com/ros2/rclpy)).
+
+On the left, FPGA bus addresses. On the right, ROS2 topic strings.
 
 ```python
 import pico_ice_ros2 as ice
