@@ -9,9 +9,14 @@ communicate together. Anything using a different protocol is "bridged" to it.
 Pushing this limit further Micro-ROS is bringing the protocol onto the
 firmware itself, allowing ROS2-formatted messages sent directly over USB.
 
-But this requires knowing the *internals* of ROS2 to be able to do anything
+But this requires knowing the internals of ROS2 to be able to do anything
 which limits the adopters to FPGA developers who are also well used to ROS2.
 
+```
+... <--ros2--> [agent] <--ros2--> [RP2040] <--???--> [iCE40]
+                          ^^^^     ^^^^^^
+                        difficult to debug
+```
 
 ## Solution Proposed
 
@@ -36,7 +41,9 @@ developers, who would be the one working with it, providing a reference
 of address for use by the ROS2 developers (possibly the same person).
 
 ```
-... <--ros2--> [script.py] <--usb-spibone--> [RP2040] <--spi-spibone--> [iCE40]
+... <--ros2--> [script.py] <--spibone--> [RP2040] <--spibone--> [iCE40]
+                ^^^^^^^^^     ^^^^^^^     ^^^^^^     ^^^^^^^
+               easier to debug at every level link the chain
 ```
 
 
