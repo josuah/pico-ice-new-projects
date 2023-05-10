@@ -205,6 +205,30 @@ peripheral to the host.
     │              │                        │                   │                   │
 ```
 
+Or, for simplicity:
+
+```
+   ROS2           NavQ+                   RP2040           ICE40 (bus ctrl)    ICE40 (bus peri)
+  network   ros2_pico_ice.py            pico_ice.uf2         TopLevel()          BusPeri()
+    │              │                        │                   │                   │
+    │              │                        │                   │      IRQ pin      │
+    │              │   -Wishbone-Serial-    │                   │<──────────────────┤
+    │              │ice_fpga_serial_bridge()│      IRQ pin      │                   │
+    │              │                        │<──────────────────┤                   │
+    │              │      irq (1 byte)      │                   │                   │
+    │              │<───────────────────────┤                   │                   │
+    │              │                        │                   │                   │
+    │              │                        │                   │                   │
+    :              :                        :                   :                   :
+
+                           ROS2 -> FPGA sequence to read each data register
+
+    :              :                        :                   :                   :
+    │              │                        │                   │                   │
+    │              │                        │                   │                   │
+```
+
+
 ### ROS2 <-> RP2040
 
 It is also possible to make a request stop at the RP2040, using the same diagrams as `ROS2 <-> FPGA` above,
