@@ -112,7 +112,6 @@ Handing of these messages:
     │              │                        │                   │                   │
     │              │                        │                   │    Bus valid      │
     │              │                        │                   ├──────────────────>│
-    │              │                        │                   │                   │
     │              │                        │                   │    Bus ready      │
     │              │                        │                   │<──────────────────┤
     │              │                        │                   │                   │
@@ -120,4 +119,51 @@ Handing of these messages:
     │              │                        │<──────────────────┤                   │
     │              │      ack (1 byte)      │                   │                   │
     │              │<───────────────────────┤                   │                   │
+```
+
+Based on rules on the `ros2_pico_ice.py` script (see above), there could also be bus writes
+originated by the script, querying the ICE40 and sending the result back.
+
+Below is an example with the ros2_pico_ice.py polling some registers from the FPGA
+and sending the value on constant interval. Alternatives such as an interrupt mechanism,
+or filtering messages to only send values that are non-null/different than the previous
+can also be decided.
+
+```
+   ROS2               NavQ+               RP2040           ICE40 (bus ctrl)    ICE40 (bus peri)
+  network          ros2_pico_ice.py     pico_ice.uf2         TopLevel()          BusPeri()
+    │              │                        │                   │                   │
+    │              │                        │                   │                   │
+    │              │                        │                   │                   │
+    │              │   -Wishbone-Serial-    │                   │                   │
+    │              │ice_fpga_serial_bridge()│                   │                   │
+    │              │                        │                   │                   │
+    │              │   command (1 byte)     │                   │                   │
+    │              ├───────────────────────>│                   │                   │
+    │              │   length N (1 byte)    │                   │                   │
+    │              ├───────────────────────>│                   │                   │
+    │              │   address (4 bytes)    │                   │                   │
+    │              ├───────────────────────>│                   │                   │
+    │              │                        │                   │                   │
+    │              │                        │  -Wishbone-SPI-   │                   │
+    │              │                        │ ice_fpga_write()  │                   │
+    │              │                        │                   │                   │
+    │              │                        │ command (1 byte)  │                   │
+    │              │                        ├──────────────────>│                   │
+    │              │                        │ address (4 bytes) │                   │
+    │              │                        ├──────────────────>│                   │
+    │              │                        │                   │    Bus valid      │
+    │              │                        │                   ├──────────────────>│
+    │              │                        │                   │    Bus ready      │
+    │              │                        │                   │<──────────────────┤
+    │              │                        │   ack (1 byte)    │                   │
+    │              │                        │<──────────────────┤                   │
+    │              │                        │ value (4*N bytes) │                   │
+    │              │                        │<──────────────────┤                   │
+    │              │   value (4*N bytes)    │                   │                   │
+    │              │<───────────────────────┤                   │                   │
+    │              │                        │                   │                   │
+    │  -DDS/Zenoh- │                        │                   │                   │
+    │ ROS2 message │                        │                   │                   │
+    │<─────────────┤                        │                   │                   │
 ```
