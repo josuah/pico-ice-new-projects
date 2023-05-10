@@ -77,14 +77,14 @@ It is also easier to implement and maintain.
 
 ## Sequence diagram
 
-### ROS2 -> FPGA
+### ROS2 -> ICE40
 
 We would subscribe from ROS2 topics to get messages incoming from the ROS2 network.
 Handing of these messages:
 
 ```
-   ROS2               NavQ+               RP2040           ICE40 (bus ctrl)    ICE40 (bus peri)
-  network          ros2_pico_ice.py     pico_ice.uf2         TopLevel()          BusPeri()
+   ROS2           NavQ+                   RP2040           ICE40 (bus ctrl)    ICE40 (bus peri)
+  network   ros2_pico_ice.py            pico_ice.uf2         TopLevel()          BusPeri()
     │              │                        │                   │                   │
     │  -DDS/Zenoh- │                        │                   │                   │
     │ ROS2 message │                        │                   │                   │
@@ -123,7 +123,7 @@ Handing of these messages:
     │              │<───────────────────────┤                   │                   │
 ```
 
-### FPGA -> ROS2
+### ICE40 -> ROS2
 
 Based on rules on the `ros2_pico_ice.py` script (see above), there could also be bus writes
 originated by the script, querying the ICE40 and sending the result back.
@@ -134,8 +134,8 @@ or filtering messages to only send values that are non-null/different than the p
 can also be decided.
 
 ```
-   ROS2               NavQ+               RP2040           ICE40 (bus ctrl)    ICE40 (bus peri)
-  network          ros2_pico_ice.py     pico_ice.uf2         TopLevel()          BusPeri()
+   ROS2           NavQ+                   RP2040           ICE40 (bus ctrl)    ICE40 (bus peri)
+  network   ros2_pico_ice.py            pico_ice.uf2         TopLevel()          BusPeri()
     │              │                        │                   │                   │
     │              │                        │                   │                   │
     │              │                        │                   │                   │
@@ -171,3 +171,41 @@ can also be decided.
     │ ROS2 message │                        │                   │                   │
     │<─────────────┤                        │                   │                   │
 ```
+
+
+### IRQ line
+
+This is the mechanism with which an interrupt signal would go all the way from the FPGA
+peripheral to the host.
+
+```
+   ROS2           NavQ+                   RP2040           ICE40 (bus ctrl)    ICE40 (bus peri)
+  network   ros2_pico_ice.py            pico_ice.uf2         TopLevel()          BusPeri()
+    │              │                        │                   │                   │
+    │              │                        │                   │      IRQ pin      │
+    │              │   -Wishbone-Serial-    │                   │<──────────────────┤
+    │              │ice_fpga_serial_bridge()│      IRQ pin      │                   │
+    │              │                        │<──────────────────┤                   │
+    │              │      irq (1 byte)      │                   │                   │
+    │              │<───────────────────────┤                   │                   │
+    │              │                        │                   │                   │
+    │              │                        │                   │                   │
+    :              :                        :                   :                   :
+
+                           ROS2 -> FPGA sequence to read the status register
+
+    :              :                        :                   :                   :
+    │              │                        │                   │                   │
+    :              :                        :                   :                   :
+
+                         ROS2 -> FPGA sequence to read the peripheral of interest
+
+    :              :                        :                   :                   :
+    │              │                        │                   │                   │
+    │              │                        │                   │                   │
+```
+
+### ROS2 <-> RP2040
+
+It is also possible to make a request stop at the RP2040, using the same diagrams as `ROS2 <-> FPGA` above,
+but removing all the RP2040 <-> ICE40 communication.
