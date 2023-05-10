@@ -77,6 +77,8 @@ It is also easier to implement and maintain.
 
 ## Sequence diagram
 
+### ROS2 -> FPGA
+
 We would subscribe from ROS2 topics to get messages incoming from the ROS2 network.
 Handing of these messages:
 
@@ -120,6 +122,8 @@ Handing of these messages:
     │              │      ack (1 byte)      │                   │                   │
     │              │<───────────────────────┤                   │                   │
 ```
+
+### FPGA -> ROS2
 
 Based on rules on the `ros2_pico_ice.py` script (see above), there could also be bus writes
 originated by the script, querying the ICE40 and sending the result back.
