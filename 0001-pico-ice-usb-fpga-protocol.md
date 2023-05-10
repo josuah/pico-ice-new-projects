@@ -73,3 +73,51 @@ ice.run([
 This kind of Rosetta Stone would allow ROS2 litteracy to FPGA developers,
 and FPGA litteracy to ROS2 developers around a same project.
 It is also easier to implement and maintain.
+
+
+## Sequence diagram
+
+We would subscribe from ROS2 topics to get messages incoming from the ROS2 network.
+Handing of these messages:
+
+```
+   ROS2               NavQ+               RP2040           ICE40 (bus ctrl)    ICE40 (bus peri)
+  network          ros2_pico_ice.py     pico_ice.uf2         TopLevel()          BusPeri()
+    │              │                        │                   │                   │
+    │  -DDS/Zenoh- │                        │                   │                   │
+    │ ROS2 message │                        │                   │                   │
+    ├─────────────>│                        │                   │                   │
+    │              │                        │                   │                   │
+    │              │   -Wishbone-Serial-    │                   │                   │
+    │              │ice_fpga_serial_bridge()│                   │                   │
+    │              │                        │                   │                   │
+    │              │   command (1 byte)     │                   │                   │
+    │              ├───────────────────────>│                   │                   │
+    │              │   length N (1 byte)    │                   │                   │
+    │              ├───────────────────────>│                   │                   │
+    │              │   address (4 bytes)    │                   │                   │
+    │              ├───────────────────────>│                   │                   │
+    │              │   value (4*N bytes)    │                   │                   │
+    │              ├───────────────────────>│                   │                   │
+    │              │                        │                   │                   │
+    │              │                        │  -Wishbone-SPI-   │                   │
+    │              │                        │ ice_fpga_write()  │                   │
+    │              │                        │                   │                   │
+    │              │                        │ command (1 byte)  │                   │
+    │              │                        ├──────────────────>│                   │
+    │              │                        │ address (4 bytes) │                   │
+    │              │                        ├──────────────────>│                   │
+    │              │                        │ value (4*N bytes) │                   │
+    │              │                        ├──────────────────>│                   │
+    │              │                        │                   │                   │
+    │              │                        │                   │    Bus valid      │
+    │              │                        │                   ├──────────────────>│
+    │              │                        │                   │                   │
+    │              │                        │                   │    Bus ready      │
+    │              │                        │                   │<──────────────────┤
+    │              │                        │                   │                   │
+    │              │                        │   ack (1 byte)    │                   │
+    │              │                        │<──────────────────┤                   │
+    │              │      ack (1 byte)      │                   │                   │
+    │              │<───────────────────────┤                   │                   │
+```
